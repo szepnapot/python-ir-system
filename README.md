@@ -2,6 +2,7 @@
 
 <a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 [![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
+<a href="https://codeclimate.com/github/szepnapot/python-ir-system/maintainability"><img src="https://api.codeclimate.com/v1/badges/a437bf79982916970088/maintainability" /></a>
 
 A basic command line application that fetches a json catalog of products from S3,
 ingests the product data, and creates an IR system. 
@@ -18,7 +19,7 @@ On Windows to run the Makefile you need [cygwin](http://www.cygwin.com/).
 ### Usage
 
 ```bash
-git clone 
+git clone https://github.com/szepnapot/python-ir-system.git
 ```
 
 ```bash
