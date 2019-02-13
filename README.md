@@ -19,7 +19,7 @@ On Windows to run the Makefile you need [cygwin](http://www.cygwin.com/).
 ### Usage
 
 ```bash
-git clone 
+git clone https://github.com/szepnapot/python-ir-system.git
 ```
 
 ```bash
