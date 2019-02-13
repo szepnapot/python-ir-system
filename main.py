@@ -13,6 +13,9 @@ from whoosh.analysis import StemmingAnalyzer
 from whoosh.qparser import QueryParser, MultifieldParser
 import requests
 
+#########################################
+#            Load config
+#########################################
 
 config = ConfigParser()
 config.read("config.ini")
@@ -20,6 +23,11 @@ FILE_URL = config.get("general", "data_file_url")
 FILEPATH = config.get("general", "local_data_path")
 INDEX_DIR = config.get("general", "index_directory")
 STEMMING_CACHESIZE = config.getint("general", "cachesize")
+
+
+#########################################
+#            Globals
+#########################################
 
 FIRST_RUN = False
 DEFAULT_LIMIT = 3
@@ -55,6 +63,10 @@ lewis limit 1
 -----------------------------------------
 """
 
+#########################################
+#               Utils
+#########################################
+
 
 def unzip(archive, target):
     """
@@ -83,13 +95,21 @@ def fetch_and_save_data():
             fd.write(chunk)
     unzip(filename, FILEPATH)
 
+#########################################
+#            Setup+ingress
+#########################################
 
+
+# -1: unbounded stemmed word cache
+# minsize=2
+# STOP_WORDS=whoosh.analysis.STOP_WORDS
 analyzer = StemmingAnalyzer(cachesize=-1)
 schema = Schema(
     description=TEXT(analyzer=analyzer),
     title=TEXT(analyzer=analyzer),
     merchant=TEXT(analyzer=analyzer),
 )
+
 
 # set up dir for index
 if not os.path.exists(INDEX_DIR):
@@ -121,6 +141,11 @@ if FIRST_RUN:
             merchant=product["merchant"],
         )
     writer.commit()
+
+
+#########################################
+#            Parsers
+#########################################
 
 # `products.json` item scheme
 fields = ["description", "title", "merchant"]
@@ -163,6 +188,11 @@ def is_help_request(inp):
 
 def is_toggle_stats_request(inp):
     return inp.strip() == ".show_stats"
+
+
+#########################################
+#            Search CLI
+#########################################
 
 
 while True:
