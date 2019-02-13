@@ -32,6 +32,7 @@ STEMMING_CACHESIZE = config.getint("general", "cachesize")
 FIRST_RUN = False
 DEFAULT_LIMIT = 3
 SHOW_STATS = True
+EXIT_MESSAGE = "Bye"
 CLI_USAGE = """
 IR (Information Retrieval) system
 Peter Lodri@szepnapot - 2019.02.13 - v0.1
@@ -194,44 +195,55 @@ def is_toggle_stats_request(inp):
 #            Search CLI
 #########################################
 
+if __name__ == '__main__':
+    import atexit
+    import signal
 
-while True:
-    user_input = input(">>").strip()
-    query = user_input
-    # exit
-    if is_exit_request(query):
-        print("Bye")
-        break
-    # help
-    if is_help_request(query):
-        print(CLI_USAGE)
-        continue
-    # stat toggle
-    if is_toggle_stats_request(query):
-        SHOW_STATS = False if SHOW_STATS else True
-        print("show_stats: {}".format("ON" if SHOW_STATS else "OFF"))
-        continue
-    # search context start
-    with ix.searcher() as searcher:
-        # parse user query
-        if user_input.startswith("."):
-            # ['.random_field', 'github ci doc', 'blbla', '.limit', '5']
-            # [0][1:] -> 'random_field'
-            input_tokens = user_input.split()
-            query_filter = input_tokens[0][1:]
-            if query_filter not in fields:
-                query = user_input
-            else:
-                query = " ".join(input_tokens[1:])
-                # .title -> 'title'
-                # parser <- parsers['title']
-                parser = parsers[query_filter]
-        query, user_limit = parse_limit(query)
-        q = parser.parse(query)
-        results = searcher.search(q, limit=user_limit if user_limit else DEFAULT_LIMIT)
-        for hit in results.items():
-            pprint(data[hit[0]])
-        if SHOW_STATS:
-            pprint({"runtime": results.runtime, "results": results.estimated_length()})
-        # set back to default
-        parser = parsers["default"]
+    def handle_exit(*args):
+        exit(0)
+
+    atexit.register(handle_exit)
+    signal.signal(signal.SIGTERM, handle_exit)
+    signal.signal(signal.SIGINT, handle_exit)
+
+    while True:
+        user_input = input(">>").strip()
+        query = user_input
+        # check exit
+        if is_exit_request(query):
+            print(EXIT_MESSAGE)
+            break
+        # check help
+        if is_help_request(query):
+            print(CLI_USAGE)
+            continue
+        # check stat toggle
+        if is_toggle_stats_request(query):
+            SHOW_STATS = False if SHOW_STATS else True
+            print("show_stats: {}".format("ON" if SHOW_STATS else "OFF"))
+            continue
+        # search context start
+        with ix.searcher() as searcher:
+            # parse user query
+            if user_input.startswith("."):
+                # ['.random_field', 'github ci doc', 'blbla', '.limit', '5']
+                # [0][1:] -> 'random_field'
+                input_tokens = user_input.split()
+                query_filter = input_tokens[0][1:]
+                if query_filter not in fields:
+                    query = user_input
+                else:
+                    query = " ".join(input_tokens[1:])
+                    # .title -> 'title'
+                    # parser <- parsers['title']
+                    parser = parsers[query_filter]
+            query, user_limit = parse_limit(query)
+            q = parser.parse(query)
+            results = searcher.search(q, limit=user_limit if user_limit else DEFAULT_LIMIT)
+            for hit in results.items():
+                pprint(data[hit[0]])
+            if SHOW_STATS:
+                pprint({"runtime": results.runtime, "results": results.estimated_length()})
+            # set back to default
+            parser = parsers["default"]
+        # search context end
