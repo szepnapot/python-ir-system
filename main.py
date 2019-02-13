@@ -57,6 +57,13 @@ lewis limit 1
 
 
 def unzip(archive, target):
+    """
+    :param archive: archive file to unpack
+    :param target: target to unpack
+    :return: None
+    Unzips the archive -> target
+    and deletes the archive afterwards.
+    """
     with gzip.open(archive, "rb") as f_in:
         with open(target, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -64,6 +71,11 @@ def unzip(archive, target):
 
 
 def fetch_and_save_data():
+    """
+    :return: None
+    Downloads a file from `FILE_URL`,
+    unzips it after.
+    """
     r = requests.get(FILE_URL, stream=True)
     filename = FILE_URL.split("/")[-1]
     with open(filename, "wb") as fd:
@@ -79,21 +91,27 @@ schema = Schema(
     merchant=TEXT(analyzer=analyzer),
 )
 
+# set up dir for index
 if not os.path.exists(INDEX_DIR):
     FIRST_RUN = True
     os.mkdir(INDEX_DIR)
 
+# download file from S3 if not exist
 if not os.path.exists(FILEPATH):
     fetch_and_save_data()
 
+# load product file to retrieve doc
 with open(FILEPATH) as f:
     data = json.load(f)
 
+# open or create index
 try:
     ix = index.open_dir(INDEX_DIR)
 except whoosh.index.EmptyIndexError:
     ix = index.create_in(INDEX_DIR, schema)
 
+# if the data not indexed yet
+# let's do it
 if FIRST_RUN:
     writer = ix.writer()
     for product in data:
@@ -104,8 +122,12 @@ if FIRST_RUN:
         )
     writer.commit()
 
+# `products.json` item scheme
 fields = ["description", "title", "merchant"]
 
+# load the parsers
+# map them to be able
+# to switch for given user query
 parsers = {
     "default": MultifieldParser(fields, schema=ix.schema),
     "description": QueryParser("description", schema=ix.schema),
@@ -117,6 +139,10 @@ parser = parsers["default"]
 
 
 def parse_limit(inp):
+    """
+    :param inp: user input (str)
+    :return: user input without limit query, parsed search limit (str, int)
+    """
     if ".limit" not in inp:
         return inp, None
     tokens = inp.strip().split(".limit ")
@@ -142,26 +168,34 @@ def is_toggle_stats_request(inp):
 while True:
     user_input = input(">>").strip()
     query = user_input
+    # exit
     if is_exit_request(query):
         print("Bye")
         break
+    # help
     if is_help_request(query):
         print(CLI_USAGE)
         continue
+    # stat toggle
     if is_toggle_stats_request(query):
         SHOW_STATS = False if SHOW_STATS else True
         print("show_stats: {}".format("ON" if SHOW_STATS else "OFF"))
         continue
+    # search context start
     with ix.searcher() as searcher:
+        # parse user query
         if user_input.startswith("."):
+            # ['.random_field', 'github ci doc', 'blbla', '.limit', '5']
+            # [0][1:] -> 'random_field'
             input_tokens = user_input.split()
             query_filter = input_tokens[0][1:]
             if query_filter not in fields:
                 query = user_input
             else:
                 query = " ".join(input_tokens[1:])
+                # .title -> 'title'
+                # parser <- parsers['title']
                 parser = parsers[query_filter]
-
         query, user_limit = parse_limit(query)
         q = parser.parse(query)
         results = searcher.search(q, limit=user_limit if user_limit else DEFAULT_LIMIT)
