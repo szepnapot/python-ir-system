@@ -15,7 +15,7 @@ import requests
 
 
 config = ConfigParser()
-config.read('config.ini')
+config.read("config.ini")
 FILE_URL = config.get("general", "data_file_url")
 FILEPATH = config.get("general", "local_data_path")
 INDEX_DIR = config.get("general", "index_directory")
@@ -117,33 +117,33 @@ parser = parsers["default"]
 
 
 def parse_limit(inp):
-    if '.limit' not in inp:
+    if ".limit" not in inp:
         return inp, None
-    tokens = inp.strip().split('.limit ')
+    tokens = inp.strip().split(".limit ")
     _query = tokens[0].strip()
     limit = int(tokens[1])
     return _query, limit
 
 
 def is_exit_request(inp):
-    if inp.strip() == '.exit':
+    if inp.strip() == ".exit":
         return True
     return False
 
 
 def is_help_request(inp):
-    return inp.strip() == '.help'
+    return inp.strip() == ".help"
 
 
 def is_toggle_stats_request(inp):
-    return inp.strip() == '.show_stats'
+    return inp.strip() == ".show_stats"
 
 
 while True:
     user_input = input(">>").strip()
     query = user_input
     if is_exit_request(query):
-        print('Bye')
+        print("Bye")
         break
     if is_help_request(query):
         print(CLI_USAGE)
@@ -168,7 +168,6 @@ while True:
         for hit in results.items():
             pprint(data[hit[0]])
         if SHOW_STATS:
-            pprint({"runtime": results.runtime,
-                    "results": results.estimated_length()})
+            pprint({"runtime": results.runtime, "results": results.estimated_length()})
         # set back to default
         parser = parsers["default"]
